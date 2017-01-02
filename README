@@ -1,0 +1,6 @@
+s3mda is a mail delivery agent for emails that are stored as objects in S3. It will put the mails into a Maildir. I would set this up with inbound SES.
+
+TODOS:
+- Will this work with a lot of emails?
+- Break the config out into something that is more portable
+- Better comments and log messages
