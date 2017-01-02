@@ -22,6 +22,7 @@ var (
 	svc        *s3.S3
 )
 
+// fetchMessage fetches one message and delivers it to the maildir
 func fetchMessage(obj *s3.Object, doneChan chan bool) {
 	// get the name of the object without the prefix
 	key := *obj.Key
@@ -60,8 +61,8 @@ func fetchMessage(obj *s3.Object, doneChan chan bool) {
 		log.Fatal("Error writing file: ", err)
 	}
 
+	// Delete the object if this has been set
 	if *delete {
-		log.Println("Will delete object")
 		delParams := (&s3.DeleteObjectInput{}).
 			SetBucket(*bucketName).
 			SetKey(key)
@@ -71,10 +72,12 @@ func fetchMessage(obj *s3.Object, doneChan chan bool) {
 		}
 	}
 
+	// Signal that this goroutine is done
 	doneChan <- true
 
 }
 
+// processPage fetches one page worth of messages at the same time
 func processPage(page *s3.ListObjectsV2Output, lastPage bool) bool {
 	log.Printf("Fetching %d messages", len(page.Contents))
 	doneChan := make(chan bool)
@@ -94,6 +97,7 @@ func main() {
 	// Parse flags & conf file
 	flag.Parse()
 
+	// Set up AWS session and s3 service
 	sess, err := session.NewSessionWithOptions(session.Options{
 		Profile:           *profile,
 		SharedConfigState: session.SharedConfigEnable,
@@ -105,6 +109,7 @@ func main() {
 	svc = s3.New(sess)
 
 	// List the contents of the bucket page by page with a smallish max number of objects (20)
+	// Process each page
 	params := (&s3.ListObjectsV2Input{}).
 		SetBucket(*bucketName).
 		SetMaxKeys(*pageSize).
@@ -115,13 +120,5 @@ func main() {
 	if err != nil {
 		log.Fatal("Error: ", err)
 	}
-
-	// in a go routine for each object
-	// Determine it's new name
-	// Download it
-	// delete the object (if this is set)
-	// send bool to the done chan
-
-	// recieve for the number of objects in that set
 
 }
